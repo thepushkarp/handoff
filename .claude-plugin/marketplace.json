@@ -1,0 +1,24 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "handoff",
+  "description": "Plugin marketplace for preserving and restoring context between Claude Code sessions",
+  "owner": {
+    "name": "thepushkarp",
+    "email": "thepushkarp@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "handoff",
+      "description": "Preserve and restore context between Claude Code sessions with structured handoff files",
+      "version": "0.1.0",
+      "author": {
+        "name": "thepushkarp"
+      },
+      "source": "./plugins/handoff",
+      "category": "productivity",
+      "keywords": ["handoff", "context", "session", "continuity", "workflow"],
+      "homepage": "https://github.com/thepushkarp/handoff",
+      "repository": "https://github.com/thepushkarp/handoff"
+    }
+  ]
+}

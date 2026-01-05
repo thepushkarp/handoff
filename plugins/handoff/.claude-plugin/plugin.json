@@ -1,0 +1,9 @@
+{
+  "name": "handoff",
+  "version": "0.1.0",
+  "description": "Preserve and restore context between Claude Code sessions with structured handoff files",
+  "author": {
+    "name": "thepushkarp"
+  },
+  "keywords": ["handoff", "context", "session", "continuity", "workflow"]
+}
