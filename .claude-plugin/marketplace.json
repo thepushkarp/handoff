@@ -10,7 +10,7 @@
     {
       "name": "handoff",
       "description": "Preserve and restore context between Claude Code sessions with structured handoff files",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "author": {
         "name": "thepushkarp"
       },
