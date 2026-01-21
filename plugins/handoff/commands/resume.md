@@ -4,7 +4,7 @@ argument-hint: [--auto]
 allowed-tools: Read, TodoWrite
 ---
 
-Resume work from an existing handoff document at .claude/HANDOFF.md.
+Resume work from an existing handoff document at docs/handoff/HANDOFF.md.
 
 ## Behavior
 
@@ -15,7 +15,7 @@ Resume work from an existing handoff document at .claude/HANDOFF.md.
 ## Steps
 
 1. **Check for Handoff File**
-   Read .claude/HANDOFF.md if it exists.
+   Read docs/handoff/HANDOFF.md if it exists.
 
 2. **Parse Most Recent Handoff**
    The file may contain multiple handoff entries (appended with timestamps). Focus on the **most recent** handoff entry (the last `## Handoff: [TIMESTAMP]` section in the file).
@@ -41,8 +41,8 @@ Resume work from an existing handoff document at .claude/HANDOFF.md.
    - Inform the user: "Resuming from handoff created at [TIMESTAMP]. Starting work on: [first next step]"
 
 4. **Handle Missing Handoff**
-   If .claude/HANDOFF.md doesn't exist:
-   - Inform the user: "No handoff file found at .claude/HANDOFF.md. Would you like to describe your current task so I can help you continue?"
+   If docs/handoff/HANDOFF.md doesn't exist:
+   - Inform the user: "No handoff file found at docs/handoff/HANDOFF.md. Would you like to describe your current task so I can help you continue?"
 
 ## Important Notes
 

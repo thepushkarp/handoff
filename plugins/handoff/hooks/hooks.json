@@ -7,7 +7,7 @@
         "hooks": [
           {
             "type": "prompt",
-            "prompt": "Context is about to be compacted, which may lose important session details. Check if there is significant work in progress (active todos, recent code changes, ongoing tasks, or important decisions made). If so, ask the user: 'Context is about to be compacted. Would you like me to create a handoff first to preserve important context? (yes/no)'. If they say yes, run the /handoff:create workflow. If they say no or if there's nothing significant to preserve, allow compaction to proceed.",
+            "prompt": "Context is about to be compacted, which may lose important session details. Check if there is significant work in progress (active todos, recent code changes, ongoing tasks, or important decisions made). If so, remind the user: 'Context is about to be compacted. Consider creating a handoff to preserve important context using the /handoff:create workflow.'.",
             "timeout": 60
           }
         ]

@@ -1,5 +1,5 @@
 ---
-description: Capture current session context to .claude/HANDOFF.md
+description: Capture current session context to docs/handoff/HANDOFF.md
 allowed-tools: Read, Write, Edit, Bash(git:*), Bash(mkdir:*)
 ---
 
@@ -12,19 +12,19 @@ Create a comprehensive handoff document to preserve context for future Claude se
 
    - **Current Task State**: What is currently being worked on? What's in progress?
    - **Key Decisions**: Important architectural or implementation choices made and their rationale
-   - **Modified Files**: Files that were changed during this session (check git status if available, or recall from conversation)
+   - **Modified Files**: Files that were changed during this session (check git log and git status if available, or recall from conversation)
    - **Blockers/Open Questions**: Anything unresolved or blocking progress
    - **Next Steps**: Clear, actionable items for the next session to continue
    - **Critical Context**: Gotchas, edge cases discovered, important patterns, or anything the next session absolutely needs to know
 
-2. **Check Git Status** (if in a git repo)
-   Run `git status` and `git diff --name-only` to identify modified files.
+2. **Check Git Log and Status** (if in a git repo)
+   Run `git log --oneline --decorate --all --graph` and `git status` to identify modified files.
 
 3. **Read Existing Handoff** (if any)
-   Try to read .claude/HANDOFF.md to check if it exists. If it does, you'll append to it.
+   Try to read docs/handoff/HANDOFF.md to check if it exists. If it does, you'll append to it.
 
 4. **Create Directory and Append Handoff**
-   Ensure .claude/ directory exists with `mkdir -p .claude`, then append a new timestamped entry to .claude/HANDOFF.md:
+   Ensure docs/handoff/ directory exists with `mkdir -p docs/handoff`, then append a new timestamped entry to docs/handoff/HANDOFF.md:
 
    ```markdown
    ---

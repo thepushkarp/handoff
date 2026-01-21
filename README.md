@@ -12,7 +12,7 @@ When working with Claude Code across multiple sessions, switching agents, or hit
 
 ## The Solution
 
-Handoff captures "necessary and sufficient" context to a `.claude/HANDOFF.md` file, enabling seamless continuation across sessions.
+Handoff captures "necessary and sufficient" context to a `docs/handoff/HANDOFF.md` file, enabling seamless continuation across sessions.
 
 ## Installation
 
@@ -28,7 +28,7 @@ Handoff captures "necessary and sufficient" context to a `.claude/HANDOFF.md` fi
 
 ### `/handoff:create`
 
-Capture current session context to `.claude/HANDOFF.md`.
+Capture current session context to `docs/handoff/HANDOFF.md`.
 
 **What it captures:**
 - Current task state (what's in progress)
@@ -69,7 +69,7 @@ This ensures you never lose important context to auto-compaction.
 
 ## Handoff File Format
 
-Handoffs are stored in `.claude/HANDOFF.md` with timestamped entries:
+Handoffs are stored in `docs/handoff/HANDOFF.md` with timestamped entries:
 
 ```markdown
 ---
@@ -108,7 +108,7 @@ Implementing user authentication feature. Login flow is complete, working on pas
 1. **Ending a session**: Run `/handoff:create` before closing Claude Code
 2. **Switching contexts**: Create a handoff before switching to a different task
 3. **Context limits**: The PreCompact hook reminds you before auto-compaction
-4. **Team handoffs**: Share `.claude/HANDOFF.md` for async collaboration
+4. **Team handoffs**: Share `docs/handoff/HANDOFF.md` for async collaboration
 5. **Resuming work**: Run `/handoff:resume` when starting a new session
 
 ## Tips
