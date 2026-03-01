@@ -1,9 +1,12 @@
 {
   "name": "handoff",
-  "version": "0.1.0",
-  "description": "Preserve and restore context between Claude Code sessions with structured handoff files",
+  "version": "0.2.0",
+  "description": "Preserve and restore context between Claude Code sessions with always-on handoff hooks (auto-save before compaction, auto-inject after)",
   "author": {
     "name": "thepushkarp"
   },
-  "keywords": ["handoff", "context", "session", "continuity", "workflow"]
+  "homepage": "https://github.com/thepushkarp/handoff",
+  "repository": "https://github.com/thepushkarp/handoff",
+  "license": "MIT",
+  "keywords": ["handoff", "context", "session", "continuity", "workflow", "compaction", "hooks"]
 }
