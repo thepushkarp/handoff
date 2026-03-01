@@ -2,6 +2,7 @@
 set -euo pipefail
 
 INPUT_JSON_FILE="$(mktemp)"
+trap 'rm -f -- "$INPUT_JSON_FILE"' EXIT
 cat >"$INPUT_JSON_FILE"
 
 has_cmd() {
@@ -66,30 +67,34 @@ set_marker_field() {
   if [[ ! -r "$marker_path" ]]; then
     return 0
   fi
+  local tmp_marker
+  tmp_marker="$(mktemp "/tmp/.claude-handoff-marker-update.${field}.XXXXXX")"
 
   if has_cmd jq; then
     jq --arg field "$field" --argjson value "$value_json" '
       .[$field] = $value
-    ' "$marker_path" >"${marker_path}.tmp"
-    mv "${marker_path}.tmp" "$marker_path"
+    ' "$marker_path" >"$tmp_marker"
+    mv "$tmp_marker" "$marker_path"
     return 0
   fi
 
   if has_cmd python3; then
-    python3 - "$marker_path" "$field" "$value_json" <<'PY' >/dev/null 2>&1 || true
+    python3 - "$marker_path" "$field" "$value_json" "$tmp_marker" <<'PY' >/dev/null 2>&1 || true
 import json
 import sys
 
-marker_path, field, value_json = sys.argv[1], sys.argv[2], sys.argv[3]
+marker_path, field, value_json, output_path = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
 with open(marker_path, "r", encoding="utf-8") as f:
     data = json.load(f)
 data[field] = json.loads(value_json)
-tmp = marker_path + ".tmp"
-with open(tmp, "w", encoding="utf-8") as f:
+with open(output_path, "w", encoding="utf-8") as f:
     json.dump(data, f)
 PY
-    mv "${marker_path}.tmp" "$marker_path"
+    mv "$tmp_marker" "$marker_path"
+    return 0
   fi
+
+  rm -f -- "$tmp_marker"
 }
 
 session_id="$(json_get '.session_id')"

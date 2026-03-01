@@ -2,6 +2,7 @@
 set -euo pipefail
 
 INPUT_JSON_FILE="$(mktemp)"
+trap 'rm -f -- "$INPUT_JSON_FILE"' EXIT
 cat >"$INPUT_JSON_FILE"
 
 has_cmd() {
@@ -79,6 +80,8 @@ write_marker() {
 
   local timestamp
   timestamp="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+  local tmp_marker
+  tmp_marker="$(mktemp "/tmp/.claude-handoff-marker.${session_id}.XXXXXX")"
 
   if has_cmd jq; then
     jq -n \
@@ -98,15 +101,36 @@ write_marker() {
         attempts: 0,
         origin: $origin,
         created_at: $created_at
-      }' >"${marker_path}.tmp"
-    mv "${marker_path}.tmp" "$marker_path"
+      }' >"$tmp_marker"
+    mv "$tmp_marker" "$marker_path"
     return 0
   fi
 
-  cat >"${marker_path}.tmp" <<EOF
-{"version":1,"session_id":"$session_id","project_dir":"$project_dir","handoff_path":"$handoff_path","needs_inject":$needs_inject,"needs_model_sections":true,"attempts":0,"origin":"$origin","created_at":"$timestamp"}
-EOF
-  mv "${marker_path}.tmp" "$marker_path"
+  if has_cmd python3; then
+    python3 - "$tmp_marker" "$session_id" "$project_dir" "$handoff_path" "$needs_inject" "$origin" "$timestamp" <<'PY'
+import json
+import sys
+
+output_path, session_id, project_dir, handoff_path, needs_inject, origin, created_at = sys.argv[1:8]
+data = {
+    "version": 1,
+    "session_id": session_id,
+    "project_dir": project_dir,
+    "handoff_path": handoff_path,
+    "needs_inject": needs_inject.lower() == "true",
+    "needs_model_sections": True,
+    "attempts": 0,
+    "origin": origin,
+    "created_at": created_at,
+}
+with open(output_path, "w", encoding="utf-8") as handle:
+    json.dump(data, handle)
+PY
+    mv "$tmp_marker" "$marker_path"
+    return 0
+  fi
+
+  rm -f -- "$tmp_marker"
 }
 
 session_id="$(json_get '.session_id')"
@@ -171,4 +195,3 @@ if [[ -n "${session_id:-}" ]]; then
   marker_path="/tmp/claude-handoff-marker-${session_id}.json"
   write_marker "$marker_path" "$session_id" "$project_dir" "$handoff_path" "true" "precompact"
 fi
-

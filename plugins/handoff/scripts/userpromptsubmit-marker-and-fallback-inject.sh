@@ -2,6 +2,7 @@
 set -euo pipefail
 
 INPUT_JSON_FILE="$(mktemp)"
+trap 'rm -f -- "$INPUT_JSON_FILE"' EXIT
 cat >"$INPUT_JSON_FILE"
 
 has_cmd() {
@@ -53,6 +54,8 @@ write_marker() {
 
   local timestamp
   timestamp="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+  local tmp_marker
+  tmp_marker="$(mktemp "/tmp/.claude-handoff-marker.${session_id}.XXXXXX")"
 
   if has_cmd jq; then
     jq -n \
@@ -72,15 +75,36 @@ write_marker() {
         attempts: 0,
         origin: $origin,
         created_at: $created_at
-      }' >"${marker_path}.tmp"
-    mv "${marker_path}.tmp" "$marker_path"
+      }' >"$tmp_marker"
+    mv "$tmp_marker" "$marker_path"
     return 0
   fi
 
-  cat >"${marker_path}.tmp" <<EOF
-{"version":1,"session_id":"$session_id","project_dir":"$project_dir","handoff_path":"$handoff_path","needs_inject":$needs_inject,"needs_model_sections":true,"attempts":0,"origin":"$origin","created_at":"$timestamp"}
-EOF
-  mv "${marker_path}.tmp" "$marker_path"
+  if has_cmd python3; then
+    python3 - "$tmp_marker" "$session_id" "$project_dir" "$handoff_path" "$needs_inject" "$origin" "$timestamp" <<'PY'
+import json
+import sys
+
+output_path, session_id, project_dir, handoff_path, needs_inject, origin, created_at = sys.argv[1:8]
+data = {
+    "version": 1,
+    "session_id": session_id,
+    "project_dir": project_dir,
+    "handoff_path": handoff_path,
+    "needs_inject": needs_inject.lower() == "true",
+    "needs_model_sections": True,
+    "attempts": 0,
+    "origin": origin,
+    "created_at": created_at,
+}
+with open(output_path, "w", encoding="utf-8") as handle:
+    json.dump(data, handle)
+PY
+    mv "$tmp_marker" "$marker_path"
+    return 0
+  fi
+
+  rm -f -- "$tmp_marker"
 }
 
 extract_latest_entry() {
@@ -108,30 +132,34 @@ set_marker_field() {
   if [[ ! -r "$marker_path" ]]; then
     return 0
   fi
+  local tmp_marker
+  tmp_marker="$(mktemp "/tmp/.claude-handoff-marker-update.${field}.XXXXXX")"
 
   if has_cmd jq; then
     jq --arg field "$field" --argjson value "$value_json" '
       .[$field] = $value
-    ' "$marker_path" >"${marker_path}.tmp"
-    mv "${marker_path}.tmp" "$marker_path"
+    ' "$marker_path" >"$tmp_marker"
+    mv "$tmp_marker" "$marker_path"
     return 0
   fi
 
   if has_cmd python3; then
-    python3 - "$marker_path" "$field" "$value_json" <<'PY' >/dev/null 2>&1 || true
+    python3 - "$marker_path" "$field" "$value_json" "$tmp_marker" <<'PY' >/dev/null 2>&1 || true
 import json
 import sys
 
-marker_path, field, value_json = sys.argv[1], sys.argv[2], sys.argv[3]
+marker_path, field, value_json, output_path = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
 with open(marker_path, "r", encoding="utf-8") as f:
     data = json.load(f)
 data[field] = json.loads(value_json)
-tmp = marker_path + ".tmp"
-with open(tmp, "w", encoding="utf-8") as f:
+with open(output_path, "w", encoding="utf-8") as f:
     json.dump(data, f)
 PY
-    mv "${marker_path}.tmp" "$marker_path"
+    mv "$tmp_marker" "$marker_path"
+    return 0
   fi
+
+  rm -f -- "$tmp_marker"
 }
 
 session_id="$(json_get '.session_id')"

@@ -2,6 +2,7 @@
 set -euo pipefail
 
 INPUT_JSON_FILE="$(mktemp)"
+trap 'rm -f -- "$INPUT_JSON_FILE"' EXIT
 cat >"$INPUT_JSON_FILE"
 
 has_cmd() {
@@ -45,7 +46,7 @@ latest_sections_filled() {
   local handoff_path="$1"
 
   if [[ ! -r "$handoff_path" ]]; then
-    printf '%s' "0 0"
+    printf '%s\n' "0 0"
     return 0
   fi
 
@@ -69,10 +70,12 @@ latest_sections_filled() {
         if (line ~ /^### /) { in_model = 0; in_hand = 0; continue }
 
         if (in_model) {
-          if (line !~ /^[[:space:]]*$/ && line !~ /^\(TODO:/) model = 1
+          placeholder = (line ~ /^\(TODO:/ || line ~ /^\[[^][]*:[^][]*\]$/ || line ~ /^- \[[^][]*:[^][]*\]$/)
+          if (line !~ /^[[:space:]]*$/ && !placeholder) model = 1
         }
         if (in_hand) {
-          if (line !~ /^[[:space:]]*$/ && line !~ /^\(TODO:/) hand = 1
+          placeholder = (line ~ /^\(TODO:/ || line ~ /^\[[^][]*:[^][]*\]$/ || line ~ /^- \[[^][]*:[^][]*\]$/)
+          if (line !~ /^[[:space:]]*$/ && !placeholder) hand = 1
         }
       }
 
@@ -89,28 +92,32 @@ increment_attempts() {
   fi
 
   if has_cmd jq; then
-    jq '.attempts = ((.attempts // 0) + 1)' "$marker_path" >"${marker_path}.tmp"
-    mv "${marker_path}.tmp" "$marker_path"
+    local tmp_marker
+    tmp_marker="$(mktemp "/tmp/.claude-handoff-marker-attempts.XXXXXX")"
+    jq '.attempts = ((.attempts // 0) + 1)' "$marker_path" >"$tmp_marker"
+    mv "$tmp_marker" "$marker_path"
     jq -r '.attempts // 0' "$marker_path" 2>/dev/null || echo "0"
     return 0
   fi
 
   if has_cmd python3; then
-    python3 - "$marker_path" <<'PY' 2>/dev/null || echo "0"
+    local tmp_marker
+    tmp_marker="$(mktemp "/tmp/.claude-handoff-marker-attempts.XXXXXX")"
+    python3 - "$marker_path" "$tmp_marker" <<'PY' 2>/dev/null || echo "0"
 import json
 import sys
 
 path = sys.argv[1]
+output_path = sys.argv[2]
 with open(path, "r", encoding="utf-8") as f:
     data = json.load(f)
 attempts = int(data.get("attempts", 0)) + 1
 data["attempts"] = attempts
-tmp = path + ".tmp"
-with open(tmp, "w", encoding="utf-8") as f:
+with open(output_path, "w", encoding="utf-8") as f:
     json.dump(data, f)
 print(attempts)
 PY
-    mv "${marker_path}.tmp" "$marker_path"
+    mv "$tmp_marker" "$marker_path"
     return 0
   fi
 
@@ -233,14 +240,14 @@ stamp_fallback_in_latest_entry() {
         }
 
         if (in_model) {
-          if (line ~ /^\(TODO:/) next
+          if (line ~ /^\(TODO:/ || line ~ /^\[[^][]*:[^][]*\]$/ || line ~ /^- \[[^][]*:[^][]*\]$/) next
           if (line !~ /^[[:space:]]*$/) model_has_content = 1
           print line
           continue
         }
 
         if (in_hand) {
-          if (line ~ /^\(TODO:/) next
+          if (line ~ /^\(TODO:/ || line ~ /^\[[^][]*:[^][]*\]$/ || line ~ /^- \[[^][]*:[^][]*\]$/) next
           if (line !~ /^[[:space:]]*$/) hand_has_content = 1
           print line
           continue
