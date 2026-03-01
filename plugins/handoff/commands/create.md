@@ -16,6 +16,8 @@ Create a comprehensive handoff document to preserve context for future Claude se
    - **Blockers/Open Questions**: Anything unresolved or blocking progress
    - **Next Steps**: Clear, actionable items for the next session to continue
    - **Critical Context**: Gotchas, edge cases discovered, important patterns, or anything the next session absolutely needs to know
+   - **Model Summary**: 8–12 bullets capturing the most important state/decisions/blockers
+   - **Handoff Context**: 10–20 lines of concrete “paste into next session” instructions (where to start, what to run, constraints)
 
 2. **Check Git Log and Status** (if in a git repo)
    Run `git log --oneline --decorate --all --graph` and `git status` to identify modified files.
@@ -52,6 +54,12 @@ Create a comprehensive handoff document to preserve context for future Claude se
 
    ### Critical Context
    [Important gotchas, patterns, or context the next session needs]
+
+   ### Model Summary
+   - [8–12 bullets: goal, progress, key decisions, blockers, next steps]
+
+   ### Handoff Context (paste into next session)
+   [10–20 lines: actionable resume instructions, including file paths/commands]
 
    ---
    ```

@@ -37,6 +37,8 @@ Capture current session context to `docs/handoff/HANDOFF.md`.
 - Blockers and open questions
 - Next steps
 - Critical context (gotchas, patterns, etc.)
+- Model summary (8–12 bullets)
+- Handoff context (pasteable resume instructions)
 
 **Usage:**
 ```
@@ -61,11 +63,15 @@ Load existing handoff context to continue work.
 
 ## Automatic Handoff Prompt
 
-The plugin includes a `PreCompact` hook that **prompts you before context compaction**:
+The plugin includes always-on hooks that make compaction safe:
 
-> "Context is about to be compacted. Would you like me to create a handoff first to preserve important context? (yes/no)"
+- **Before compaction** (`PreCompact`): appends a new entry to `docs/handoff/HANDOFF.md` with deterministic snapshot data and placeholders for a model-written summary/context.
+- **After compaction** (`SessionStart` matcher `compact`): auto-injects the latest handoff entry back into Claude's context (stdout injection).
+- **Enforcement** (`Stop`): if the latest entry still has TODO placeholders for **Model Summary** and **Handoff Context**, Claude is blocked from stopping (up to 3 attempts) until it fills them in.
 
 This ensures you never lose important context to auto-compaction.
+
+> Note: These scripts use `jq` when available to parse hook input and transcripts. Without `jq`, the plugin degrades gracefully but will capture less detail.
 
 ## Handoff File Format
 
@@ -100,6 +106,16 @@ Implementing user authentication feature. Login flow is complete, working on pas
 - The `AUTH_SECRET` env var must be set or tests fail silently
 - Rate limiting is handled in nginx, not in code
 
+### Model Summary
+- Login flow is complete; password reset in progress
+- Using JWT sessions for stateless scaling
+- Blocker: decide reset token expiry (1h vs 24h)
+
+### Handoff Context (paste into next session)
+1. Open `docs/handoff/HANDOFF.md` and focus on the most recent entry.
+2. Implement password reset endpoint and tests first.
+3. Confirm `AUTH_SECRET` is set before running tests.
+
 ---
 ```
 
@@ -107,7 +123,7 @@ Implementing user authentication feature. Login flow is complete, working on pas
 
 1. **Ending a session**: Run `/handoff:create` before closing Claude Code
 2. **Switching contexts**: Create a handoff before switching to a different task
-3. **Context limits**: The PreCompact hook reminds you before auto-compaction
+3. **Context limits**: Compaction auto-saves and re-injects a handoff entry
 4. **Team handoffs**: Share `docs/handoff/HANDOFF.md` for async collaboration
 5. **Resuming work**: Run `/handoff:resume` when starting a new session
 
@@ -117,6 +133,33 @@ Implementing user authentication feature. Login flow is complete, working on pas
 - **Include file paths**: Helps the next session navigate quickly
 - **Note gotchas**: Things that weren't obvious save time later
 - **Use auto mode carefully**: Good for continuing known tasks, but review mode helps verify context is correct
+
+## Optional: Compaction instructions in CLAUDE.md
+
+Claude Code supports project-level compaction guidance via a `CLAUDE.md` section named `# Compact instructions`:
+
+```markdown
+# Compact instructions
+
+When compacting, preserve:
+- the latest handoff entry in docs/handoff/HANDOFF.md
+- current task state, blockers, and next steps
+- key decisions and constraints
+```
+
+## Plugin maintenance notes
+
+Claude Code caches plugin content by version. When you change plugin code, bump the version in `plugins/handoff/.claude-plugin/plugin.json` so existing users receive the update.
+
+Useful commands when developing:
+
+```bash
+# Validate manifests and marketplace structure
+/plugin validate
+
+# If testing a local plugin directory (see Claude Code docs for the exact flag usage)
+claude --plugin-dir ./plugins/handoff
+```
 
 ## License
 

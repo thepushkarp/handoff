@@ -9,14 +9,14 @@
   "plugins": [
     {
       "name": "handoff",
-      "description": "Preserve and restore context between Claude Code sessions with structured handoff files",
-      "version": "0.1.1",
+      "description": "Preserve and restore context between Claude Code sessions with always-on handoff hooks (auto-save before compaction, auto-inject after)",
+      "version": "0.2.0",
       "author": {
         "name": "thepushkarp"
       },
       "source": "./plugins/handoff",
       "category": "productivity",
-      "keywords": ["handoff", "context", "session", "continuity", "workflow"],
+      "keywords": ["handoff", "context", "session", "continuity", "workflow", "compaction", "hooks"],
       "homepage": "https://github.com/thepushkarp/handoff",
       "repository": "https://github.com/thepushkarp/handoff"
     }

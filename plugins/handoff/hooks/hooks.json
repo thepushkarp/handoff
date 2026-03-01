@@ -1,14 +1,47 @@
 {
-  "description": "Prompt user to create handoff before context compaction",
+  "description": "Always-on handoff: auto-save before compaction, auto-inject after, and enforce model summary/context sections",
   "hooks": {
     "PreCompact": [
       {
-        "matcher": "*",
         "hooks": [
           {
-            "type": "prompt",
-            "prompt": "Context is about to be compacted, which may lose important session details. Check if there is significant work in progress (active todos, recent code changes, ongoing tasks, or important decisions made). If so, remind the user: 'Context is about to be compacted. Consider creating a handoff to preserve important context using the /handoff:create workflow.'.",
-            "timeout": 60
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/precompact-append-handoff.sh\"",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/sessionstart-inject-latest-handoff.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/userpromptsubmit-marker-and-fallback-inject.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/stop-enforce-model-sections.sh\"",
+            "timeout": 15
           }
         ]
       }
